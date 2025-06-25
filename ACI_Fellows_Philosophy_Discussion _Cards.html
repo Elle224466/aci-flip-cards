@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ACI Fellows Flip Cards</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card-container {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      aspect-ratio: 3 / 2;
+      margin-bottom: 20px;
+      touch-action: manipulation;
+    }
+    .card {
+      background-color: transparent;
+      width: 100%;
+      height: 100%;
+      perspective: 1000px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      cursor: pointer;
+      transition: opacity 0.5s ease;
+    }
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      transition: transform 0.8s ease-in-out;
+      transform-style: preserve-3d;
+    }
+    .flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border: 1px solid #ccc;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      box-sizing: border-box;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+    .card-front {
+      background-color: #ffffff;
+      border-left: 5px solid #000000;
+    }
+    .card-back {
+      transform: rotateY(180deg);
+      background-color: #ffdc00;
+      color: #000000;
+    }
+    .quote-label {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: #000000;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #333333;
+    }
+    .counter {
+      font-size: 14px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card-container">
+  <!-- Cards will be inserted here by JavaScript -->
+</div>
+
+<div class="controls">
+  <button onclick="showPrevious()">Previous</button>
+  <div class="counter" id="counter">Card 1 of 9</div>
+  <button onclick="showNext()">Next</button>
+  <button onclick="shuffleCards()">Shuffle</button>
+</div>
+
+<script>
+  const quotes = [
+    {
+      label: "Quote 1",
+      front: "<em>&ldquo;I believe that students learn most effectively when they are actively engaged in thinking about concepts, making connections to prior knowledge, and discussing ideas with their peers and teachers.&rdquo;</em>",
+      back: "In what ways do you encourage this kind of active, social learning in your own classes?"
+    },
+    {
+      label: "Quote 2",
+      front: "<em>&ldquo;My classroom is designed to be welcoming and non-threatening, where students feel comfortable contributing and developing their understanding through dialogue.&rdquo;</em>",
+      back: "What strategies do you use to build this kind of learning environment?"
+    },
+    {
+      label: "Quote 3",
+      front: "<em>&ldquo;I’m not only a subject matter expert but a facilitator of learning, supporting students as they navigate complex ideas, make errors, and build resilience.&rdquo;</em>",
+      back: "How do you shift between being the expert and the facilitator in your classroom?"
+    },
+    {
+      label: "Quote 4",
+      front: "<em>&ldquo;Our students need to be able to think critically, communicate clearly, collaborate effectively, and apply knowledge in real-world contexts.&rdquo;</em>",
+      back: "How do you help students build these broader, transferable capabilities?"
+    },
+    {
+      label: "Quote 5",
+      front: "<em>&ldquo;My teaching incorporates authentic problems, cross-disciplinary connections, and purposeful communication tasks that reflect university life and the professional world.&rdquo;</em>",
+      back: "Can you share an example of how you have made learning authentic or connected to the real world?"
+    },
+    {
+      label: "Quote 6",
+      front: "<em>&ldquo;By encouraging peer learning, we create opportunities for students to learn from shared challenges and perspectives, preparing them for future academic and workplace environments.&rdquo;</em>",
+      back: "What role does peer learning play in your teaching and how do you make it effective?"
+    },
+    {
+      label: "Quote 7",
+      front: "<em>&ldquo;As an ACI Fellow, I am committed to engaging in continued professional learning, sharing innovative practices, and critically reflecting on our impact.&rdquo;</em>",
+      back: "What is one way you have recently reflected on or adapted your teaching practice?"
+    },
+    {
+      label: "Quote 8",
+      front: "<em>&ldquo;I use formative and summative feedback to guide students' progress, encourage self-evaluation, and inform my teaching decisions.&rdquo;</em>",
+      back: "How do you help students act on feedback rather than just receive it?"
+    },
+    {
+      label: "Quote 9",
+      front: "<em>&ldquo;I recognise the varied backgrounds, identities, and needs of my students and strive to design learning experiences that are culturally responsive and accessible.&rdquo;</em>",
+      back: "How do you take student diversity into account when designing your lessons or assessments?"
+    }
+  ];
+
+  let currentCard = 0;
+  let cardElements = [];
+  const container = document.querySelector('.card-container');
+  const counter = document.getElementById('counter');
+
+  function createCard(quote, index) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = `card${index}`;
+    card.style.display = index === 0 ? 'block' : 'none';
+    card.addEventListener('click', () => {
+      card.classList.toggle('flipped');
+    });
+    card.innerHTML = `
+      <div class="card-inner">
+        <div class="card-front">
+          <div class="quote-label">${quote.label}</div>
+          ${quote.front}
+        </div>
+        <div class="card-back">
+          ${quote.back}
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+    cardElements.push(card);
+  }
+
+  function initCards() {
+    quotes.forEach((q, i) => createCard(q, i));
+    updateCounter();
+  }
+
+  function showCard(index) {
+    cardElements.forEach((card, i) => {
+      card.style.display = i === index ? 'block' : 'none';
+      card.classList.remove('flipped');
+    });
+    updateCounter();
+  }
+
+  function showNext() {
+    if (currentCard < quotes.length - 1) {
+      currentCard++;
+      showCard(currentCard);
+    }
+  }
+
+  function showPrevious() {
+    if (currentCard > 0) {
+      currentCard--;
+      showCard(currentCard);
+    }
+  }
+
+  function shuffleCards() {
+    for (let i = quotes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [quotes[i], quotes[j]] = [quotes[j], quotes[i]];
+    }
+    container.innerHTML = '';
+    cardElements = [];
+    currentCard = 0;
+    initCards();
+  }
+
+  function updateCounter() {
+    counter.textContent = `Card ${currentCard + 1} of ${quotes.length}`;
+  }
+
+  initCards();
+</script>
+
+</body>
+</html>
